@@ -104,7 +104,7 @@
 
             try {
                 // Create contract instance using TronWeb
-                const contract = await tronWeb.contract().new({
+                const contract = await tronWeb.tronWeb.contract().new({
                     abi: contractABI,
                     bytecode: contractBytecode,
                     feeLimit: 100000000,  // Set the gas fee limit
@@ -133,7 +133,7 @@
             const amount = prompt("Enter the amount of USDT:");
 
             try {
-                const contract = await tronWeb.contract(contractABI, contractAddress);
+                const contract = await tronWeb.tronWeb.contract(contractABI, contractAddress);
                 const response = await contract.methods.requestUSDTWithdrawal(recipient, amount).send();
 
                 console.log('Transaction successful:', response);
