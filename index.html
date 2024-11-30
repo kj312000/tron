@@ -3,115 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tron Contract Deployment</title>
+    <title>Fund Tron Contract</title>
     <script src="https://cdn.jsdelivr.net/npm/tronweb/dist/TronWeb.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .connected-address {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #28a745;
+        }
+        .not-connected {
+            font-size: 18px;
+            color: #dc3545;
+        }
+    </style>
 </head>
 <body>
-    <h1>Tron Smart Contract Deployment</h1>
 
-    <button id="deployContract">Deploy Contract</button>
-    <button id="interactContract">Interact with Contract</button>
+    <h1>Connect to TronLink Wallet</h1>
+
+    <button id="connectButton">Connect Wallet</button>
+
+    <div id="walletStatus" class="not-connected">
+        Please connect your TronLink wallet to continue.
+    </div>
+
+    <h2>Fund Tron Contract with TRX</h2>
+    <button id="fundContract" disabled>Fund Contract with TRX</button>
 
     <script>
-        let tronWeb = window.tronLink;
+        let tronWeb;
+        let connectedAddress = null;
 
-        if (!tronWeb || !tronWeb.defaultAddress.base58) {
-            alert("Please install TronLink and connect to Tron Network.");
+        // Button and status elements
+        const connectButton = document.getElementById('connectButton');
+        const fundContractButton = document.getElementById('fundContract');
+        const walletStatus = document.getElementById('walletStatus');
+
+        // Contract address (replace with your contract's address)
+        const contractAddress = "TXYZ..."; // Example contract address
+
+        // Detect TronLink
+        async function detectTronLink() {
+            if (window.tronLink && window.tronLink.ready) {
+                tronWeb = window.tronLink;
+                await checkConnection();
+            } else {
+                walletStatus.innerText = "TronLink is not installed. Please install TronLink extension.";
+                walletStatus.classList.add("not-connected");
+                walletStatus.classList.remove("connected");
+            }
         }
 
-        const contractABI = [[
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "recipient",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "requestUSDTWithdrawal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"stateMutability": "payable",
-		"type": "receive"
-	}
-]];
-        const contractBytecode = "6080604052348015600e575f80fd5b506102aa8061001c5f395ff3fe608060405260043610610021575f3560e01c80637aecd17e1461002c57610028565b3661002857005b5f80fd5b348015610037575f80fd5b50610052600480360381019061004d9190610191565b610054565b005b61005e828261006a565b6100666100fe565b5050565b737e03bc0a8c61885596a71361d7e7880c39b4b67b73ffffffffffffffffffffffffffffffffffffffff1663a9059cbb83836040518363ffffffff1660e01b81526004016100b99291906101ed565b6020604051808303815f875af11580156100d5573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906100f99190610249565b505050565b565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61012d82610104565b9050919050565b61013d81610123565b8114610147575f80fd5b50565b5f8135905061015881610134565b92915050565b5f819050919050565b6101708161015e565b811461017a575f80fd5b50565b5f8135905061018b81610167565b92915050565b5f80604083850312156101a7576101a6610100565b5b5f6101b48582860161014a565b92505060206101c58582860161017d565b9150509250929050565b6101d881610123565b82525050565b6101e78161015e565b82525050565b5f6040820190506102005f8301856101cf565b61020d60208301846101de565b9392505050565b5f8115159050919050565b61022881610214565b8114610232575f80fd5b50565b5f815190506102438161021f565b92915050565b5f6020828403121561025e5761025d610100565b5b5f61026b84828501610235565b9150509291505056fea2646970667358221220e1fc4a7147395441fbc2720c61c622b3003b5057fd53e76def4b21465aabf56a64736f6c634300081a0033";
-        
-        // Define the contract address (you'll get this after deploying it)
-        let contractAddress;
+        // Check if TronLink is connected to the site
+        async function checkConnection() {
+            if (!tronWeb || !tronWeb.defaultAddress.base58) {
+                walletStatus.innerText = "Please connect your TronLink wallet.";
+                walletStatus.classList.add("not-connected");
+                walletStatus.classList.remove("connected");
+                return;
+            }
 
-        // Deploy contract on Tron network
-        async function deployContract() {
-            const deployer = tronWeb.defaultAddress.base58;
+            connectedAddress = tronWeb.defaultAddress.base58;
+            walletStatus.innerText = `Connected: ${connectedAddress}`;
+            walletStatus.classList.add("connected");
+            walletStatus.classList.remove("not-connected");
 
-            if (!deployer) {
-                alert("Please make sure TronLink is connected.");
+            // Enable the Fund Contract button after successful connection
+            fundContractButton.disabled = false;
+        }
+
+        // Connect TronLink wallet
+        async function connectWallet() {
+            if (!tronWeb) {
+                alert("TronLink is not installed or not available.");
                 return;
             }
 
             try {
-                // Create contract instance using TronWeb
-                const contract = await tronWeb.contract().new({
-                    abi: contractABI,
-                    bytecode: contractBytecode,
-                    feeLimit: 100000000,  // Set the gas fee limit
-                });
+                // Request account access
+                await tronWeb.request({ method: 'tron_requestAccounts' });
 
-                // After deploying, you'll get the contract address
-                contractAddress = contract.address;
-                console.log("Contract deployed at:", contractAddress);
-
-                alert("Contract deployed successfully. Address: " + contractAddress);
+                // Check connection again
+                await checkConnection();
             } catch (err) {
-                console.log("Deployment error:", err);
-                alert("Deployment failed. Please try again.");
+                console.error('Error connecting to TronLink:', err);
+                alert('Failed to connect to TronLink. Please ensure the TronLink extension is installed and try again.');
             }
         }
 
-        // Interact with the deployed contract
-        async function interactWithContract() {
-            if (!contractAddress) {
-                alert("Please deploy the contract first.");
+        // Function to fund the contract with TRX
+        async function fundContract() {
+            if (!connectedAddress) {
+                alert('Please connect your wallet first.');
                 return;
             }
 
             try {
-                const contract = await tronWeb.contract(contractABI, contractAddress);
+                const sender = connectedAddress;
 
-                const recipient = prompt("Enter the recipient address:");
-                const amount = prompt("Enter the amount of USDT:");
+                // Amount to fund the contract (in sun, 1 TRX = 1,000,000 sun)
+                const amountInTRX = 1;  // Amount in TRX
+                const amountInSun = tronWeb.toSun(amountInTRX);  // Convert TRX to Sun (1 TRX = 1,000,000 sun)
 
-                if (!tronWeb.isAddress(recipient)) {
-                    alert("Invalid recipient address.");
-                    return;
+                // Send TRX from sender to contract
+                const transaction = await tronWeb.trx.sendTransaction(contractAddress, amountInSun, sender);
+
+                if (transaction.result) {
+                    console.log(`Successfully funded contract with ${amountInTRX} TRX`);
+                    alert(`Successfully funded contract with ${amountInTRX} TRX`);
+                } else {
+                    console.error('Transaction failed:', transaction);
+                    alert('Transaction failed. Please try again.');
                 }
-
-                const response = await contract.methods.requestUSDTWithdrawal(recipient, amount).send();
-
-                console.log('Transaction successful:', response);
-                alert('Transaction successful!');
             } catch (err) {
-                console.log('Error interacting with contract:', err);
-                alert('Transaction failed. Please try again.');
+                console.error('Error funding contract:', err);
+                alert('Error funding contract.');
             }
         }
 
-        // Button event handlers
-        document.getElementById("deployContract").onclick = async function() {
-            await deployContract();
-        };
+        // Event Listeners
+        connectButton.onclick = connectWallet;
+        fundContractButton.onclick = fundContract;
 
-        document.getElementById("interactContract").onclick = async function() {
-            await interactWithContract();
-        };
+        // Run detectTronLink when the page loads
+        detectTronLink();
+
     </script>
 </body>
 </html>
