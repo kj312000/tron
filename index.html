@@ -23,9 +23,9 @@
                     await window.tronLink.request({ method: 'tron_requestAccounts' });  // Ask for connection permission
                     tronWeb = window.tronLink;
                     await tronWeb.ready;  // Wait for TronLink to be ready
-                    if (tronWeb.defaultAddress.base58) {
-                        console.log("TronLink is connected with address:", tronWeb.defaultAddress.base58);
-                        alert("TronLink connected. Address: " + tronWeb.defaultAddress.base58);
+                    if (tronWeb.tronWeb.defaultAddress.base58) {
+                        console.log("TronLink is connected with address:", tronWeb.tronWeb.defaultAddress.base58);
+                        alert("TronLink connected. Address: " + tronWeb.tronWeb.defaultAddress.base58);
                     } else {
                         alert("TronLink is connected, but no address found. Please select an account.");
                     }
@@ -43,9 +43,9 @@
                         fullHost: 'https://api.trongrid.io',
                         privateKey: window.ethereum.selectedAddress, // Using Trust Wallet selected address
                     });
-                    if (tronWeb.defaultAddress.base58) {
-                        console.log("Trust Wallet is connected with address:", tronWeb.defaultAddress.base58);
-                        alert("Trust Wallet connected. Address: " + tronWeb.defaultAddress.base58);
+                    if (tronWeb.tronWeb.defaultAddress.base58) {
+                        console.log("Trust Wallet is connected with address:", tronWeb.tronWeb.defaultAddress.base58);
+                        alert("Trust Wallet connected. Address: " + tronWeb.tronWeb.defaultAddress.base58);
                     } else {
                         alert("Trust Wallet is connected, but no address found. Please select an account.");
                     }
@@ -94,12 +94,12 @@
 
         // Deploy contract on Tron network
         async function deployContract() {
-            if (!tronWeb || !tronWeb.defaultAddress.base58) {
+            if (!tronWeb || !tronWeb.tronWeb.defaultAddress.base58) {
                 alert("Please make sure TronLink or Trust Wallet is connected.");
                 return;
             }
 
-            const deployer = tronWeb.defaultAddress.base58;
+            const deployer = tronWeb.tronWeb.defaultAddress.base58;
             console.log("Deploying contract with address:", deployer);
 
             try {
@@ -123,7 +123,7 @@
 
         // Interact with the deployed contract
         async function interactWithContract() {
-            if (!tronWeb || !tronWeb.defaultAddress.base58) {
+            if (!tronWeb || !tronWeb.tronWeb.defaultAddress.base58) {
                 alert("Please make sure TronLink or Trust Wallet is connected.");
                 return;
             }
