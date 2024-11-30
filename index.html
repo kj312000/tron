@@ -15,33 +15,27 @@
     <script>
         let tronWeb;
 
-        // Check if Trust Wallet or TronLink is available and connected
+        // Function to check if TronLink or Trust Wallet is connected
         async function checkWalletConnection() {
-            // Check if Trust Wallet is available
-            if (window.ethereum && window.ethereum.isTrust) {
-                // Trust Wallet has injected Ethereum-compatible Web3
-                console.log("Trust Wallet is connected.");
-
-                // Initialize TronWeb with Trust Wallet's provider
+            // Checking for TronLink first (TronLink is the most common wallet for TRON)
+            if (window.tronLink) {
+                tronWeb = window.tronLink;
+                await tronWeb.ready;  // Wait for TronLink to be ready
+                console.log("TronLink is connected with address:", tronWeb.defaultAddress.base58);
+                alert("TronLink connected. Address: " + tronWeb.defaultAddress.base58);
+            } 
+            // Checking for Trust Wallet
+            else if (window.ethereum && window.ethereum.isTrust) {
+                // Trust Wallet is injected as `window.ethereum`
                 tronWeb = new TronWeb({
                     fullHost: 'https://api.trongrid.io',
-                    privateKey: window.ethereum.selectedAddress, // Use Trust Wallet's selected address
+                    privateKey: window.ethereum.selectedAddress, // Using Trust Wallet selected address
                 });
-
-                // Check if we have a valid address in the Trust Wallet
-                if (tronWeb && tronWeb.defaultAddress.base58) {
-                    console.log("Connected to Trust Wallet with address:", tronWeb.defaultAddress.base58);
-                } else {
-                    console.log("Failed to connect to Trust Wallet.");
-                    alert("Trust Wallet is not connected. Please make sure the wallet is unlocked and connected.");
-                }
-            } else if (window.tronLink) {
-                // If TronLink is available, use it
-                tronWeb = window.tronLink;
-                await tronWeb.ready;
-                console.log("TronLink is connected.");
+                console.log("Trust Wallet is connected with address:", tronWeb.defaultAddress.base58);
+                alert("Trust Wallet connected. Address: " + tronWeb.defaultAddress.base58);
             } else {
-                alert("Please install either Trust Wallet or TronLink to interact with this dApp.");
+                console.log("No supported wallet detected.");
+                alert("Please install TronLink or Trust Wallet to interact with the dApp.");
             }
         }
 
@@ -80,7 +74,7 @@
         // Deploy contract on Tron network
         async function deployContract() {
             if (!tronWeb || !tronWeb.defaultAddress.base58) {
-                alert("Please make sure Trust Wallet or TronLink is connected.");
+                alert("Please make sure TronLink or Trust Wallet is connected.");
                 return;
             }
 
@@ -113,7 +107,6 @@
                 return;
             }
 
-            
             try {
                 const contract = await tronWeb.contract(contractABI, contractAddress);
 
