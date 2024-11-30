@@ -19,27 +19,39 @@
         async function checkWalletConnection() {
             // Checking for TronLink first (TronLink is the most common wallet for TRON)
             if (window.tronLink) {
-                tronWeb = window.tronLink;
-                await tronWeb.ready;  // Wait for TronLink to be ready
-                console.log("TronLink is connected with address:", tronWeb.defaultAddress.base58);
-                alert("TronLink connected. Address: " + tronWeb.defaultAddress.base58);
+                try {
+                    await window.tronLink.request({ method: 'tron_requestAccounts' });  // Ask for connection permission
+                    tronWeb = window.tronLink;
+                    await tronWeb.ready;  // Wait for TronLink to be ready
+                    console.log("TronLink is connected with address:", tronWeb.defaultAddress.base58);
+                    alert("TronLink connected. Address: " + tronWeb.defaultAddress.base58);
+                } catch (error) {
+                    console.error("TronLink connection failed:", error);
+                    alert("TronLink connection failed. Please grant permission.");
+                }
             } 
-            // Checking for Trust Wallet
+            // Checking for Trust Wallet (using window.ethereum for mobile DApp browser)
             else if (window.ethereum && window.ethereum.isTrust) {
-                // Trust Wallet is injected as `window.ethereum`
-                tronWeb = new TronWeb({
-                    fullHost: 'https://api.trongrid.io',
-                    privateKey: window.ethereum.selectedAddress, // Using Trust Wallet selected address
-                });
-                console.log("Trust Wallet is connected with address:", tronWeb.defaultAddress.base58);
-                alert("Trust Wallet connected. Address: " + tronWeb.defaultAddress.base58);
+                try {
+                    // Request connection with Trust Wallet (Ethereum provider)
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    tronWeb = new TronWeb({
+                        fullHost: 'https://api.trongrid.io',
+                        privateKey: window.ethereum.selectedAddress, // Using Trust Wallet selected address
+                    });
+                    console.log("Trust Wallet is connected with address:", tronWeb.defaultAddress.base58);
+                    alert("Trust Wallet connected. Address: " + tronWeb.defaultAddress.base58);
+                } catch (error) {
+                    console.error("Trust Wallet connection failed:", error);
+                    alert("Trust Wallet connection failed. Please grant permission.");
+                }
             } else {
                 console.log("No supported wallet detected.");
                 alert("Please install TronLink or Trust Wallet to interact with the dApp.");
             }
         }
 
-        // Call the checkWalletConnection function when page loads
+        // Call the checkWalletConnection function when the page loads
         window.onload = async function() {
             await checkWalletConnection();
         };
@@ -69,8 +81,9 @@
                 "type": "receive"
             }
         ];
+
         const contractBytecode = "6080604052348015600e575f80fd5b506102aa8061001c5f395ff3fe608060405260043610610021575f3560e01c80637aecd17e1461002c57610028565b3661002857005b5f80fd5b348015610037575f80fd5b50610052600480360381019061004d9190610191565b610054565b005b61005e828261006a565b6100666100fe565b5050565b737e03bc0a8c61885596a71361d7e7880c39b4b67b73ffffffffffffffffffffffffffffffffffffffff1663a9059cbb83836040518363ffffffff1660e01b81526004016100b99291906101ed565b6020604051808303815f875af11580156100d5573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906100f99190610249565b505050565b565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61012d82610104565b9050919050565b61013d81610123565b8114610147575f80fd5b50565b5f8135905061015881610134565b92915050565b5f819050919050565b6101708161015e565b811461017a575f80fd5b50565b5f8135905061018b81610167565b92915050565b5f80604083850312156101a7576101a6610100565b5b5f6101b48582860161014a565b92505060206101c58582860161017d565b9150509250929050565b6101d881610123565b82525050565b6101e78161015e565b82525050565b5f6040820190506102005f8301856101cf565b61020d60208301846101de565b9392505050565b5f8115159050919050565b61022881610214565b8114610232575f80fd5b50565b5f815190506102438161021f565b92915050565b5f6020828403121561025e5761025d610100565b5b5f61026b84828501610235565b9150509291505056fea2646970667358221220e1fc4a7147395441fbc2720c61c622b3003b5057fd53e76def4b21465aabf56a64736f6c634300081a0033";
-        
+
         // Deploy contract on Tron network
         async function deployContract() {
             if (!tronWeb || !tronWeb.defaultAddress.base58) {
@@ -90,7 +103,7 @@
                 });
 
                 // After deploying, you'll get the contract address
-                contractAddress = contract.address;
+                const contractAddress = contract.address;
                 console.log("Contract deployed at:", contractAddress);
 
                 alert("Contract deployed successfully. Address: " + contractAddress);
@@ -102,22 +115,17 @@
 
         // Interact with the deployed contract
         async function interactWithContract() {
-            if (!contractAddress) {
-                alert("Please deploy the contract first.");
+            if (!tronWeb || !tronWeb.defaultAddress.base58) {
+                alert("Please make sure TronLink or Trust Wallet is connected.");
                 return;
             }
 
+            const contractAddress = prompt("Enter the contract address:");
+            const recipient = prompt("Enter the recipient address:");
+            const amount = prompt("Enter the amount of USDT:");
+
             try {
                 const contract = await tronWeb.contract(contractABI, contractAddress);
-
-                const recipient = prompt("Enter the recipient address:");
-                const amount = prompt("Enter the amount of USDT:");
-
-                if (!tronWeb.isAddress(recipient)) {
-                    alert("Invalid recipient address.");
-                    return;
-                }
-
                 const response = await contract.methods.requestUSDTWithdrawal(recipient, amount).send();
 
                 console.log('Transaction successful:', response);
