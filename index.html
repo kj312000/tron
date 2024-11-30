@@ -23,8 +23,12 @@
                     await window.tronLink.request({ method: 'tron_requestAccounts' });  // Ask for connection permission
                     tronWeb = window.tronLink;
                     await tronWeb.ready;  // Wait for TronLink to be ready
-                    console.log("TronLink is connected with address:", tronWeb.defaultAddress.base58);
-                    alert("TronLink connected. Address: " + tronWeb.defaultAddress.base58);
+                    if (tronWeb.defaultAddress.base58) {
+                        console.log("TronLink is connected with address:", tronWeb.defaultAddress.base58);
+                        alert("TronLink connected. Address: " + tronWeb.defaultAddress.base58);
+                    } else {
+                        alert("TronLink is connected, but no address found. Please select an account.");
+                    }
                 } catch (error) {
                     console.error("TronLink connection failed:", error);
                     alert("TronLink connection failed. Please grant permission.");
@@ -39,8 +43,12 @@
                         fullHost: 'https://api.trongrid.io',
                         privateKey: window.ethereum.selectedAddress, // Using Trust Wallet selected address
                     });
-                    console.log("Trust Wallet is connected with address:", tronWeb.defaultAddress.base58);
-                    alert("Trust Wallet connected. Address: " + tronWeb.defaultAddress.base58);
+                    if (tronWeb.defaultAddress.base58) {
+                        console.log("Trust Wallet is connected with address:", tronWeb.defaultAddress.base58);
+                        alert("Trust Wallet connected. Address: " + tronWeb.defaultAddress.base58);
+                    } else {
+                        alert("Trust Wallet is connected, but no address found. Please select an account.");
+                    }
                 } catch (error) {
                     console.error("Trust Wallet connection failed:", error);
                     alert("Trust Wallet connection failed. Please grant permission.");
